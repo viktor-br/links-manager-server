@@ -9,8 +9,9 @@ const (
 
 // User represent user entity
 type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	ID       string
+	Username string
+	Password string
 	Role     int
 }
 

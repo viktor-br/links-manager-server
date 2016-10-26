@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/viktor-br/links-manager-server/app/log"
 	"github.com/viktor-br/links-manager-server/core/entities"
 	"github.com/viktor-br/links-manager-server/core/interactors"
 	"io/ioutil"
@@ -12,48 +13,93 @@ import (
 // XAuthToken represents HTTP header for authentication token.
 const XAuthToken = "X-Auth-Token"
 
-// NewUserController constructs UserController.
-func NewUserController() *UserController {
-	return &UserController{
-		interactors.UserInteractorImpl{},
-	}
+// UserAuth structure to parse login request into.
+type UserAuth struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // UserController contains user CRUD actions.
 type UserController struct {
+	Logger     log.Logger
 	Interactor interactors.UserInteractor
+}
+
+// NewUserController constructs UserController.
+func NewUserController(logger log.Logger) *UserController {
+	return &UserController{
+		logger,
+		interactors.UserInteractorImpl{},
+	}
+}
+
+// Log checks if attached logger and uses it.
+func (userCtrl *UserController) Log(args ...interface{}) {
+	if userCtrl.Logger != nil {
+		userCtrl.Logger.Log(args...)
+	}
 }
 
 // Create validates parameters, invokes interactor and return results.
 func (userCtrl *UserController) Create(w http.ResponseWriter, r *http.Request) {
-	var b []byte
 	var user entities.User
+
+	method := "user::create"
 
 	// Read user info
 	userIdentifier := r.Header.Get(XAuthToken)
 	if userIdentifier == "" {
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Println("userPut empty token")
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusForbidden,
+			log.LogController, method,
+			log.LogMessage, "empty token",
+		)
 		return
 	}
 
 	currentUser, err := userCtrl.Interactor.Authorize(userIdentifier)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Printf("userPut access for token %s forbidden: %s\n", userIdentifier, err.Error())
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusForbidden,
+			log.LogController, method,
+			log.LogToken, userIdentifier,
+			log.LogMessage, err.Error(),
+		)
 		return
 	}
 
 	isAllowedCreateUser, err := currentUser.IsAllowedCreateUser()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Printf("userPut failed to check user rights %s: %s\n", currentUser.Username, err.Error())
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusInternalServerError,
+			log.LogController, method,
+			log.LogToken, userIdentifier,
+			log.LogUserID, currentUser.ID,
+			log.LogMessage, err.Error(),
+		)
 		return
 	}
 
 	if !isAllowedCreateUser {
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Printf("userPut forbidden for user %s\n", currentUser.Username)
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusForbidden,
+			log.LogController, method,
+			log.LogToken, userIdentifier,
+			log.LogUserID, currentUser.ID,
+			log.LogMessage, "Not allowed to create new user",
+		)
 		return
 	}
 
@@ -62,14 +108,30 @@ func (userCtrl *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	input, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Printf("userPut unable to read input: %s\n", err.Error())
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusBadRequest,
+			log.LogController, method,
+			log.LogToken, userIdentifier,
+			log.LogUserID, currentUser.ID,
+			log.LogMessage, err.Error(),
+		)
 		return
 	}
 
 	err = json.Unmarshal(input, &user)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Printf("userPut json parse failed: %s, %v\n", err.Error(), b)
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusBadRequest,
+			log.LogController, method,
+			log.LogToken, userIdentifier,
+			log.LogUserID, currentUser.ID,
+			log.LogMessage, fmt.Sprintf("json parse failed: %s", err.Error()),
+		)
 		return
 	}
 
@@ -77,52 +139,117 @@ func (userCtrl *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	user, err = userCtrl.Interactor.Create(user)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Printf("userLogin unable to create user: %s\n", user.Username)
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusNotFound,
+			log.LogController, method,
+			log.LogToken, userIdentifier,
+			log.LogUserID, currentUser.ID,
+			log.LogMessage, fmt.Sprintf("unable to create user %s: %s", user.Username, err.Error()),
+		)
 		return
 	}
 
 	userJSON, err := json.Marshal(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Printf("userPut json encode failed: %s\n", err.Error())
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusInternalServerError,
+			log.LogController, method,
+			log.LogToken, userIdentifier,
+			log.LogUserID, currentUser.ID,
+			log.LogMessage, fmt.Sprintf("json encode failed: %s", err.Error()),
+		)
 		return
 	}
 
-	w.Write(userJSON)
+	_, err = w.Write(userJSON)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusInternalServerError,
+			log.LogController, method,
+			log.LogToken, userIdentifier,
+			log.LogUserID, currentUser.ID,
+			log.LogMessage, fmt.Sprintf("unable to write response for %s: %s", user.Username, err.Error()),
+		)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
-
-	fmt.Printf("userLogin user created in successfully: %s\n", user.Username)
+	userCtrl.Log(
+		log.LogRequestURI, r.RequestURI,
+		log.LogRemoteAddr, r.RemoteAddr,
+		log.LogHTTPStatus, http.StatusOK,
+		log.LogController, method,
+		log.LogToken, userIdentifier,
+		log.LogUserID, currentUser.ID,
+		log.LogMessage, fmt.Sprintf("user % created successfully", user.Username),
+	)
 }
 
 // Authenticate checks parameters, invokes token generator and return in HTTP header.
 func (userCtrl *UserController) Authenticate(w http.ResponseWriter, r *http.Request) {
-	var b []byte
+	var userAuth UserAuth
 	var user entities.User
+	var authToken string
+
+	method := "user::authenticate"
 
 	input, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Printf("userLogin unable to read input: %s\n", err.Error())
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusBadRequest,
+			log.LogController, method,
+			log.LogMessage, err.Error(),
+		)
 		return
 	}
 
-	err = json.Unmarshal(input, &user)
+	err = json.Unmarshal(input, &userAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Printf("userLogin json parse failed: %s, %v\n", err.Error(), b)
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusBadRequest,
+			log.LogController, method,
+			log.LogMessage, fmt.Sprintf("json parse failed: %s", err.Error()),
+		)
 		return
 	}
 
-	authToken, err := userCtrl.Interactor.Authenticate(user)
+	user, authToken, err = userCtrl.Interactor.Authenticate(userAuth.Username, userAuth.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Printf("userLogin wrong credentials: %s\n", user.Username)
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusForbidden,
+			log.LogController, method,
+			log.LogUserID, user.ID,
+			log.LogMessage, fmt.Sprintf("json parse failed: %s", err.Error()),
+		)
 		return
 	}
 
 	w.Header().Set(XAuthToken, authToken)
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Printf("userLogin user logged in successfully: %s\n", user.Username)
+
+	userCtrl.Log(
+		log.LogRequestURI, r.RequestURI,
+		log.LogRemoteAddr, r.RemoteAddr,
+		log.LogHTTPStatus, http.StatusOK,
+		log.LogController, method,
+		log.LogUserID, user.ID,
+	)
 }

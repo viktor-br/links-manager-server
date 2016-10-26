@@ -1,16 +1,22 @@
 package main
 
 import (
-	"net/http"
+	"github.com/go-kit/kit/log"
 	"github.com/viktor-br/links-manager-server/app/handlers"
+	"net/http"
+	"os"
 )
 
 func main() {
-	http.HandleFunc("/api/v1/user", handlers.User)
-	http.HandleFunc("/api/v1/user/login", handlers.UserLogin)
-	//http.HandleFunc("/api/v1/item/link", userPut)
-	//http.HandleFunc("/api/v1/item/keyphrase", userPut)
+	var logger log.Logger
+	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
+	logger = log.NewContext(logger).With("ts", log.DefaultTimestampUTC)
+	logger = log.NewContext(logger).With("instance_id", 123)
+
+	userHandler := handlers.NewUserHandler(logger)
+	userAuthenticateHandler := handlers.NewUserAuthenticateHandler(logger)
+
+	http.Handle("/api/v1/user", userHandler)
+	http.Handle("/api/v1/user/login", userAuthenticateHandler)
 	http.ListenAndServe(":8080", nil)
 }
-
-

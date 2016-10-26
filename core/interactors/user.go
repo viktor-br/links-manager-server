@@ -1,10 +1,13 @@
 package interactors
 
-import "github.com/viktor-br/links-manager-server/core/entities"
+import (
+	"github.com/satori/go.uuid"
+	"github.com/viktor-br/links-manager-server/core/entities"
+)
 
 // UserInteractor combines different implementations to process external requests.
 type UserInteractor interface {
-	Authenticate(entities.User) (string, error)
+	Authenticate(username, password string) (entities.User, string, error)
 	Authorize(string) (entities.User, error)
 	Create(entities.User) (entities.User, error)
 }
@@ -19,8 +22,8 @@ func NewUserInteractor() (UserInteractor, error) {
 }
 
 // Authenticate generates access token.
-func (userInteractor UserInteractorImpl) Authenticate(user entities.User) (string, error) {
-	return "123", nil
+func (userInteractor UserInteractorImpl) Authenticate(username, password string) (entities.User, string, error) {
+	return entities.User{ID: uuid.NewV4().String(), Username: "test", Password: "test"}, "123", nil
 }
 
 // Create implements new user creation.
@@ -30,5 +33,5 @@ func (userInteractor UserInteractorImpl) Create(user entities.User) (entities.Us
 
 // Authorize checks if user authorized on system.
 func (userInteractor UserInteractorImpl) Authorize(token string) (entities.User, error) {
-	return entities.User{Username: "test", Password: "test"}, nil
+	return entities.User{ID: uuid.NewV4().String(), Username: "test", Password: "test"}, nil
 }
