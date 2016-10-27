@@ -5,30 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/satori/go.uuid"
+	"github.com/viktor-br/links-manager-server/app/mocks"
 	"github.com/viktor-br/links-manager-server/core/entities"
 	"net/http"
 	"testing"
 )
-
-// UserInteractorMock mocks UserInteractorImpl
-type UserInteractorMock struct {
-	AuthenticateImpl func(username, password string) (entities.User, string, error)
-	AuthorizeImpl    func(string) (entities.User, error)
-	CreateImpl       func(entities.User) (entities.User, error)
-}
-
-// Authenticate mocks method via implementation method.
-func (userInteractorMock UserInteractorMock) Authenticate(username, password string) (entities.User, string, error) {
-	return userInteractorMock.AuthenticateImpl(username, password)
-}
-
-func (userInteractorMock UserInteractorMock) Authorize(token string) (entities.User, error) {
-	return userInteractorMock.AuthorizeImpl(token)
-}
-
-func (userInteractorMock UserInteractorMock) Create(user entities.User) (entities.User, error) {
-	return userInteractorMock.CreateImpl(user)
-}
 
 func createRegularUser() entities.User {
 	return entities.User{
@@ -50,16 +31,16 @@ func createAdminUser() entities.User {
 
 func TestUserCreateEmptyToken(t *testing.T) {
 	ctrl := &UserController{
-		Interactor: &UserInteractorMock{
+		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return entities.User{}, nil
 			},
 		},
 	}
 
-	r := NewHTTPRequestMock("", []byte{})
+	r := mocks.NewHTTPRequestMock([]byte{})
 
-	w := NewResponseWriterMock()
+	w := mocks.NewResponseWriterMock()
 
 	ctrl.Create(w, r)
 
@@ -70,16 +51,17 @@ func TestUserCreateEmptyToken(t *testing.T) {
 
 func TestUserCreateAuthorizeFailed(t *testing.T) {
 	ctrl := &UserController{
-		Interactor: &UserInteractorMock{
+		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return entities.User{}, fmt.Errorf("Authorization failed")
 			},
 		},
 	}
 
-	r := NewHTTPRequestMock("124", []byte{})
+	r := mocks.NewHTTPRequestMock([]byte{})
+	r.Header.Set(XAuthToken, "124")
 
-	w := NewResponseWriterMock()
+	w := mocks.NewResponseWriterMock()
 
 	ctrl.Create(w, r)
 
@@ -91,7 +73,7 @@ func TestUserCreateAuthorizeFailed(t *testing.T) {
 func TestUserCreateByRegularUserFailed(t *testing.T) {
 	u := createRegularUser()
 	ctrl := &UserController{
-		Interactor: &UserInteractorMock{
+		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
 			},
@@ -103,9 +85,10 @@ func TestUserCreateByRegularUserFailed(t *testing.T) {
 
 	userJSON, _ := json.Marshal(u)
 
-	r := NewHTTPRequestMock("124", userJSON)
+	r := mocks.NewHTTPRequestMock(userJSON)
+	r.Header.Set(XAuthToken, "124")
 
-	w := NewResponseWriterMock()
+	w := mocks.NewResponseWriterMock()
 
 	ctrl.Create(w, r)
 
@@ -117,7 +100,7 @@ func TestUserCreateByRegularUserFailed(t *testing.T) {
 func TestUserCreateCorruptedJSON(t *testing.T) {
 	u := createAdminUser()
 	ctrl := &UserController{
-		Interactor: &UserInteractorMock{
+		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
 			},
@@ -127,9 +110,10 @@ func TestUserCreateCorruptedJSON(t *testing.T) {
 		},
 	}
 
-	r := NewHTTPRequestMock("124", []byte("corrupted json"))
+	r := mocks.NewHTTPRequestMock([]byte("corrupted json"))
+	r.Header.Set(XAuthToken, "124")
 
-	w := NewResponseWriterMock()
+	w := mocks.NewResponseWriterMock()
 
 	ctrl.Create(w, r)
 
@@ -141,7 +125,7 @@ func TestUserCreateCorruptedJSON(t *testing.T) {
 func TestUserCreateFailed(t *testing.T) {
 	u := createAdminUser()
 	ctrl := &UserController{
-		Interactor: &UserInteractorMock{
+		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
 			},
@@ -152,9 +136,10 @@ func TestUserCreateFailed(t *testing.T) {
 	}
 	userJSON, _ := json.Marshal(u)
 
-	r := NewHTTPRequestMock("124", userJSON)
+	r := mocks.NewHTTPRequestMock(userJSON)
+	r.Header.Set(XAuthToken, "124")
 
-	w := NewResponseWriterMock()
+	w := mocks.NewResponseWriterMock()
 
 	ctrl.Create(w, r)
 
@@ -166,7 +151,7 @@ func TestUserCreateFailed(t *testing.T) {
 func TestUserCreateSuccess(t *testing.T) {
 	u := createAdminUser()
 	ctrl := &UserController{
-		Interactor: &UserInteractorMock{
+		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
 			},
@@ -177,9 +162,10 @@ func TestUserCreateSuccess(t *testing.T) {
 	}
 	userJSON, _ := json.Marshal(u)
 
-	r := NewHTTPRequestMock("124", userJSON)
+	r := mocks.NewHTTPRequestMock(userJSON)
+	r.Header.Set(XAuthToken, "124")
 
-	w := NewResponseWriterMock()
+	w := mocks.NewResponseWriterMock()
 
 	ctrl.Create(w, r)
 
@@ -195,7 +181,7 @@ func TestUserCreateSuccess(t *testing.T) {
 func TestAuthenticateCorruptedJSON(t *testing.T) {
 	u := createAdminUser()
 	ctrl := &UserController{
-		Interactor: &UserInteractorMock{
+		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
 			},
@@ -205,9 +191,9 @@ func TestAuthenticateCorruptedJSON(t *testing.T) {
 		},
 	}
 
-	r := NewHTTPRequestMock("124", []byte("Corrupted JSON"))
+	r := mocks.NewHTTPRequestMock([]byte("Corrupted JSON"))
 
-	w := NewResponseWriterMock()
+	w := mocks.NewResponseWriterMock()
 
 	ctrl.Authenticate(w, r)
 
@@ -219,7 +205,7 @@ func TestAuthenticateCorruptedJSON(t *testing.T) {
 func TestAuthenticateFailed(t *testing.T) {
 	u := createAdminUser()
 	ctrl := &UserController{
-		Interactor: &UserInteractorMock{
+		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, fmt.Errorf("User interactor creation failed")
 			},
@@ -230,9 +216,10 @@ func TestAuthenticateFailed(t *testing.T) {
 	}
 	userJSON, _ := json.Marshal(u)
 
-	r := NewHTTPRequestMock("124", userJSON)
+	r := mocks.NewHTTPRequestMock(userJSON)
+	r.Header.Set(XAuthToken, "124")
 
-	w := NewResponseWriterMock()
+	w := mocks.NewResponseWriterMock()
 
 	ctrl.Authenticate(w, r)
 
@@ -245,7 +232,7 @@ func TestAuthenticateSuccess(t *testing.T) {
 	u := createAdminUser()
 	token := "123"
 	ctrl := &UserController{
-		Interactor: &UserInteractorMock{
+		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, fmt.Errorf("User interactor creation failed")
 			},
@@ -256,9 +243,10 @@ func TestAuthenticateSuccess(t *testing.T) {
 	}
 	userJSON, _ := json.Marshal(u)
 
-	r := NewHTTPRequestMock(token, userJSON)
+	r := mocks.NewHTTPRequestMock(userJSON)
+	r.Header.Set(XAuthToken, token)
 
-	w := NewResponseWriterMock()
+	w := mocks.NewResponseWriterMock()
 
 	ctrl.Authenticate(w, r)
 

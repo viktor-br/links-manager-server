@@ -1,6 +1,7 @@
-package controllers
+package mocks
 
 import (
+	"github.com/viktor-br/links-manager-server/core/entities"
 	"io"
 	"net/http"
 )
@@ -18,6 +19,28 @@ type RequestBodyMock struct {
 	ReadImpl []byte
 }
 
+// UserInteractorMock mocks UserInteractorImpl
+type UserInteractorMock struct {
+	AuthenticateImpl func(username, password string) (entities.User, string, error)
+	AuthorizeImpl    func(string) (entities.User, error)
+	CreateImpl       func(entities.User) (entities.User, error)
+}
+
+// Authenticate mocks method via implementation method (allow simulate errors and etc).
+func (userInteractorMock UserInteractorMock) Authenticate(username, password string) (entities.User, string, error) {
+	return userInteractorMock.AuthenticateImpl(username, password)
+}
+
+// Authorize mocks method via implementation method (allow simulate errors and etc).
+func (userInteractorMock UserInteractorMock) Authorize(token string) (entities.User, error) {
+	return userInteractorMock.AuthorizeImpl(token)
+}
+
+// Create mocks method via implementation method (allow simulate errors and etc).
+func (userInteractorMock UserInteractorMock) Create(user entities.User) (entities.User, error) {
+	return userInteractorMock.CreateImpl(user)
+}
+
 // NewResponseWriterMock constructs ResponseWriterMock instance.
 func NewResponseWriterMock() *ResponseWriterMock {
 	return &ResponseWriterMock{
@@ -26,9 +49,8 @@ func NewResponseWriterMock() *ResponseWriterMock {
 }
 
 // NewHTTPRequestMock constructs http.Request instance.
-func NewHTTPRequestMock(token string, userJSON []byte) *http.Request {
+func NewHTTPRequestMock(userJSON []byte) *http.Request {
 	r := &http.Request{Header: http.Header{}}
-	r.Header.Set(XAuthToken, token)
 	r.Body = &RequestBodyMock{
 		ReadImpl: userJSON,
 	}

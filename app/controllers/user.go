@@ -27,9 +27,17 @@ type UserController struct {
 
 // NewUserController constructs UserController.
 func NewUserController(logger log.Logger) *UserController {
+	userInteractor, err := interactors.NewUserInteractor()
+	if err != nil {
+		logger.Log(
+			log.LogController, "user",
+			log.LogMessage, err.Error(),
+		)
+		return nil
+	}
 	return &UserController{
-		logger,
-		interactors.UserInteractorImpl{},
+		Logger:     logger,
+		Interactor: userInteractor,
 	}
 }
 
