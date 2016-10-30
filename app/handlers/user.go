@@ -5,33 +5,34 @@ import (
 	"fmt"
 	"github.com/viktor-br/links-manager-server/app/controllers"
 	"github.com/viktor-br/links-manager-server/app/log"
+	"github.com/viktor-br/links-manager-server/core/interactors"
 	"net/http"
 )
 
 // UserHandler routes user CRUD request to user controller.
 type UserHandler struct {
-	Controller *controllers.UserController
+	Controller controllers.UserController
 	Logger     log.Logger
 }
 
 // UserAuthenticateHandler routes authentication request to user controller.
 type UserAuthenticateHandler struct {
-	Controller *controllers.UserController
+	Controller controllers.UserController
 	Logger     log.Logger
 }
 
 // NewUserHandler is UserHandler constructor.
-func NewUserHandler(logger log.Logger) *UserHandler {
+func NewUserHandler(userController controllers.UserController, userInteractor interactors.UserInteractor, logger log.Logger) *UserHandler {
 	return &UserHandler{
-		Controller: controllers.NewUserController(logger),
+		Controller: userController,
 		Logger:     logger,
 	}
 }
 
 // NewUserAuthenticateHandler is UserAuthenticateHandler constructor.
-func NewUserAuthenticateHandler(logger log.Logger) *UserAuthenticateHandler {
+func NewUserAuthenticateHandler(userController controllers.UserController, userInteractor interactors.UserInteractor, logger log.Logger) *UserAuthenticateHandler {
 	return &UserAuthenticateHandler{
-		Controller: controllers.NewUserController(logger),
+		Controller: userController,
 		Logger:     logger,
 	}
 }

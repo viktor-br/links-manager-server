@@ -19,37 +19,36 @@ type UserAuth struct {
 	Password string `json:"password"`
 }
 
-// UserController contains user CRUD actions.
-type UserController struct {
+// UserController provide contract to interact with controller.
+type UserController interface {
+	Create(w http.ResponseWriter, r *http.Request)
+	Authenticate(w http.ResponseWriter, r *http.Request)
+	Log(args ...interface{})
+}
+
+// UserControllerImpl contains user CRUD actions.
+type UserControllerImpl struct {
 	Logger     log.Logger
 	Interactor interactors.UserInteractor
 }
 
 // NewUserController constructs UserController.
-func NewUserController(logger log.Logger) *UserController {
-	userInteractor, err := interactors.NewUserInteractor()
-	if err != nil {
-		logger.Log(
-			log.LogController, "user",
-			log.LogMessage, err.Error(),
-		)
-		return nil
-	}
-	return &UserController{
+func NewUserController(userInteractor interactors.UserInteractor, logger log.Logger) *UserControllerImpl {
+	return &UserControllerImpl{
 		Logger:     logger,
 		Interactor: userInteractor,
 	}
 }
 
 // Log checks if attached logger and uses it.
-func (userCtrl *UserController) Log(args ...interface{}) {
+func (userCtrl *UserControllerImpl) Log(args ...interface{}) {
 	if userCtrl.Logger != nil {
 		userCtrl.Logger.Log(args...)
 	}
 }
 
 // Create validates parameters, invokes interactor and return results.
-func (userCtrl *UserController) Create(w http.ResponseWriter, r *http.Request) {
+func (userCtrl *UserControllerImpl) Create(w http.ResponseWriter, r *http.Request) {
 	var user entities.User
 
 	method := "user::create"
@@ -202,7 +201,7 @@ func (userCtrl *UserController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // Authenticate checks parameters, invokes token generator and return in HTTP header.
-func (userCtrl *UserController) Authenticate(w http.ResponseWriter, r *http.Request) {
+func (userCtrl *UserControllerImpl) Authenticate(w http.ResponseWriter, r *http.Request) {
 	var userAuth UserAuth
 	var user entities.User
 	var authToken string

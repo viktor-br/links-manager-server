@@ -26,6 +26,35 @@ type UserInteractorMock struct {
 	CreateImpl       func(entities.User) (entities.User, error)
 }
 
+// UserControllerMock mocks UserController
+type UserControllerMock struct {
+	Calls []string
+}
+
+// LoggerMock mocks logger.
+type LoggerMock struct {
+}
+
+// Log mocks logger main method.
+func (loggerMock *LoggerMock) Log(keyvals ...interface{}) error {
+	return nil
+}
+
+// Create mocks UserControllers method call.
+func (userControllerMock *UserControllerMock) Create(w http.ResponseWriter, r *http.Request) {
+	userControllerMock.Calls = append(userControllerMock.Calls, "create")
+}
+
+// Authenticate mocks UserControllers method call.
+func (userControllerMock *UserControllerMock) Authenticate(w http.ResponseWriter, r *http.Request) {
+	userControllerMock.Calls = append(userControllerMock.Calls, "authenticate")
+}
+
+// Log mocks UserControllers method call.
+func (userControllerMock *UserControllerMock) Log(args ...interface{}) {
+	userControllerMock.Calls = append(userControllerMock.Calls, "log")
+}
+
 // Authenticate mocks method via implementation method (allow simulate errors and etc).
 func (userInteractorMock UserInteractorMock) Authenticate(username, password string) (entities.User, string, error) {
 	return userInteractorMock.AuthenticateImpl(username, password)
@@ -39,6 +68,11 @@ func (userInteractorMock UserInteractorMock) Authorize(token string) (entities.U
 // Create mocks method via implementation method (allow simulate errors and etc).
 func (userInteractorMock UserInteractorMock) Create(user entities.User) (entities.User, error) {
 	return userInteractorMock.CreateImpl(user)
+}
+
+// NewLoggerMock creates logger mock instance.
+func NewLoggerMock() *LoggerMock {
+	return &LoggerMock{}
 }
 
 // NewResponseWriterMock constructs ResponseWriterMock instance.
@@ -56,6 +90,16 @@ func NewHTTPRequestMock(userJSON []byte) *http.Request {
 	}
 
 	return r
+}
+
+// NewUserControllerMock creates UserController mock.
+func NewUserControllerMock() *UserControllerMock {
+	return &UserControllerMock{}
+}
+
+// NewUserInteractorMock creates new UserInteractor mock.
+func NewUserInteractorMock() *UserInteractorMock {
+	return &UserInteractorMock{}
 }
 
 // Read mocks ResponseWriterMock method.

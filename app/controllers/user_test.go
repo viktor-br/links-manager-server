@@ -30,7 +30,7 @@ func createAdminUser() entities.User {
 }
 
 func TestUserCreateEmptyToken(t *testing.T) {
-	ctrl := &UserController{
+	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return entities.User{}, nil
@@ -50,7 +50,7 @@ func TestUserCreateEmptyToken(t *testing.T) {
 }
 
 func TestUserCreateAuthorizeFailed(t *testing.T) {
-	ctrl := &UserController{
+	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return entities.User{}, fmt.Errorf("Authorization failed")
@@ -72,7 +72,7 @@ func TestUserCreateAuthorizeFailed(t *testing.T) {
 
 func TestUserCreateByRegularUserFailed(t *testing.T) {
 	u := createRegularUser()
-	ctrl := &UserController{
+	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
@@ -99,7 +99,7 @@ func TestUserCreateByRegularUserFailed(t *testing.T) {
 
 func TestUserCreateCorruptedJSON(t *testing.T) {
 	u := createAdminUser()
-	ctrl := &UserController{
+	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
@@ -124,7 +124,7 @@ func TestUserCreateCorruptedJSON(t *testing.T) {
 
 func TestUserCreateFailed(t *testing.T) {
 	u := createAdminUser()
-	ctrl := &UserController{
+	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
@@ -150,7 +150,7 @@ func TestUserCreateFailed(t *testing.T) {
 
 func TestUserCreateSuccess(t *testing.T) {
 	u := createAdminUser()
-	ctrl := &UserController{
+	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
@@ -180,7 +180,7 @@ func TestUserCreateSuccess(t *testing.T) {
 
 func TestAuthenticateCorruptedJSON(t *testing.T) {
 	u := createAdminUser()
-	ctrl := &UserController{
+	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, nil
@@ -204,7 +204,7 @@ func TestAuthenticateCorruptedJSON(t *testing.T) {
 
 func TestAuthenticateFailed(t *testing.T) {
 	u := createAdminUser()
-	ctrl := &UserController{
+	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, fmt.Errorf("User interactor creation failed")
@@ -231,7 +231,7 @@ func TestAuthenticateFailed(t *testing.T) {
 func TestAuthenticateSuccess(t *testing.T) {
 	u := createAdminUser()
 	token := "123"
-	ctrl := &UserController{
+	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
 			AuthorizeImpl: func(string) (entities.User, error) {
 				return u, fmt.Errorf("User interactor creation failed")
