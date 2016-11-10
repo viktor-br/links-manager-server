@@ -6,6 +6,8 @@ import (
 	"github.com/viktor-br/links-manager-server/app/controllers"
 	"github.com/viktor-br/links-manager-server/app/handlers"
 	l "github.com/viktor-br/links-manager-server/app/log"
+	"github.com/viktor-br/links-manager-server/core/config"
+	"github.com/viktor-br/links-manager-server/core/implementation"
 	"github.com/viktor-br/links-manager-server/core/interactors"
 	"net/http"
 	"os"
@@ -17,7 +19,13 @@ func main() {
 	logger = log.NewContext(logger).With("ts", log.DefaultTimestampUTC)
 	logger = log.NewContext(logger).With("instance_id", 123)
 
-	userInteractor, err := interactors.NewUserInteractor()
+	config := &config.AppConfigImpl{
+		SecretVal: "asdGeyfkN5dsMBDtw840",
+	}
+
+	userRepository := implementation.NewUserRepository()
+	sessionRepository := implementation.NewSessionRepository()
+	userInteractor, err := interactors.NewUserInteractor(config, userRepository, sessionRepository)
 	if err != nil {
 		logger.Log(l.LogMessage, fmt.Sprintf("Faile to start, unable to create interactor %s", err.Error()))
 		return

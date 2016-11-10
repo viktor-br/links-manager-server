@@ -21,9 +21,9 @@ type RequestBodyMock struct {
 
 // UserInteractorMock mocks UserInteractorImpl
 type UserInteractorMock struct {
-	AuthenticateImpl func(username, password string) (entities.User, string, error)
-	AuthorizeImpl    func(string) (entities.User, error)
-	CreateImpl       func(entities.User) (entities.User, error)
+	AuthenticateImpl func(username, password string) (*entities.User, *entities.Session, error)
+	AuthorizeImpl    func(string) (*entities.User, error)
+	CreateImpl       func(*entities.User) error
 }
 
 // UserControllerMock mocks UserController
@@ -33,6 +33,11 @@ type UserControllerMock struct {
 
 // LoggerMock mocks logger.
 type LoggerMock struct {
+}
+
+// UserRepositoryMock mocks UserRepository.
+type UserRepositoryMock struct {
+	FindByUsernameImpl func(username string) (*entities.User, error)
 }
 
 // Log mocks logger main method.
@@ -56,17 +61,17 @@ func (userControllerMock *UserControllerMock) Log(args ...interface{}) {
 }
 
 // Authenticate mocks method via implementation method (allow simulate errors and etc).
-func (userInteractorMock UserInteractorMock) Authenticate(username, password string) (entities.User, string, error) {
+func (userInteractorMock UserInteractorMock) Authenticate(username, password string) (*entities.User, *entities.Session, error) {
 	return userInteractorMock.AuthenticateImpl(username, password)
 }
 
 // Authorize mocks method via implementation method (allow simulate errors and etc).
-func (userInteractorMock UserInteractorMock) Authorize(token string) (entities.User, error) {
+func (userInteractorMock UserInteractorMock) Authorize(token string) (*entities.User, error) {
 	return userInteractorMock.AuthorizeImpl(token)
 }
 
 // Create mocks method via implementation method (allow simulate errors and etc).
-func (userInteractorMock UserInteractorMock) Create(user entities.User) (entities.User, error) {
+func (userInteractorMock UserInteractorMock) Create(user *entities.User) error {
 	return userInteractorMock.CreateImpl(user)
 }
 
@@ -138,4 +143,9 @@ func (writer *ResponseWriterMock) Header() http.Header {
 // WriteHeader mocks appropriate method of http.ResponseWriter and save assigned status code to struct variable.
 func (writer *ResponseWriterMock) WriteHeader(statusCode int) {
 	writer.WrittenHeader = statusCode
+}
+
+// FindByUsername mocks UserRepository method
+func (userRepositoryMock *UserRepositoryMock) FindByUsername(username string) (*entities.User, error) {
+	return userRepositoryMock.FindByUsernameImpl(username)
 }

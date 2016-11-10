@@ -139,11 +139,12 @@ func (userCtrl *UserControllerImpl) Create(w http.ResponseWriter, r *http.Reques
 			log.LogUserID, currentUser.ID,
 			log.LogMessage, fmt.Sprintf("json parse failed: %s", err.Error()),
 		)
+		fmt.Println(err.Error())
 		return
 	}
 
 	// Create user
-	user, err = userCtrl.Interactor.Create(user)
+	err = userCtrl.Interactor.Create(&user)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		userCtrl.Log(
@@ -203,8 +204,6 @@ func (userCtrl *UserControllerImpl) Create(w http.ResponseWriter, r *http.Reques
 // Authenticate checks parameters, invokes token generator and return in HTTP header.
 func (userCtrl *UserControllerImpl) Authenticate(w http.ResponseWriter, r *http.Request) {
 	var userAuth UserAuth
-	var user entities.User
-	var authToken string
 
 	method := "user::authenticate"
 
@@ -234,7 +233,7 @@ func (userCtrl *UserControllerImpl) Authenticate(w http.ResponseWriter, r *http.
 		return
 	}
 
-	user, authToken, err = userCtrl.Interactor.Authenticate(userAuth.Username, userAuth.Password)
+	user, session, err := userCtrl.Interactor.Authenticate(userAuth.Username, userAuth.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		userCtrl.Log(
@@ -248,7 +247,7 @@ func (userCtrl *UserControllerImpl) Authenticate(w http.ResponseWriter, r *http.
 		return
 	}
 
-	w.Header().Set(XAuthToken, authToken)
+	w.Header().Set(XAuthToken, session.ID)
 
 	w.WriteHeader(http.StatusOK)
 

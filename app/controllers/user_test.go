@@ -11,8 +11,8 @@ import (
 	"testing"
 )
 
-func createRegularUser() entities.User {
-	return entities.User{
+func createRegularUser() *entities.User {
+	return &entities.User{
 		ID:       uuid.NewV4().String(),
 		Username: "test",
 		Password: "password",
@@ -20,8 +20,8 @@ func createRegularUser() entities.User {
 	}
 }
 
-func createAdminUser() entities.User {
-	return entities.User{
+func createAdminUser() *entities.User {
+	return &entities.User{
 		ID:       uuid.NewV4().String(),
 		Username: "test",
 		Password: "password",
@@ -29,11 +29,17 @@ func createAdminUser() entities.User {
 	}
 }
 
+func createSession() *entities.Session {
+	return &entities.Session{
+		ID: uuid.NewV4().String(),
+	}
+}
+
 func TestUserCreateEmptyToken(t *testing.T) {
 	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
-			AuthorizeImpl: func(string) (entities.User, error) {
-				return entities.User{}, nil
+			AuthorizeImpl: func(string) (*entities.User, error) {
+				return &entities.User{}, nil
 			},
 		},
 	}
@@ -52,8 +58,8 @@ func TestUserCreateEmptyToken(t *testing.T) {
 func TestUserCreateAuthorizeFailed(t *testing.T) {
 	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
-			AuthorizeImpl: func(string) (entities.User, error) {
-				return entities.User{}, fmt.Errorf("Authorization failed")
+			AuthorizeImpl: func(string) (*entities.User, error) {
+				return &entities.User{}, fmt.Errorf("Authorization failed")
 			},
 		},
 	}
@@ -74,11 +80,11 @@ func TestUserCreateByRegularUserFailed(t *testing.T) {
 	u := createRegularUser()
 	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
-			AuthorizeImpl: func(string) (entities.User, error) {
+			AuthorizeImpl: func(string) (*entities.User, error) {
 				return u, nil
 			},
-			CreateImpl: func(entities.User) (entities.User, error) {
-				return u, nil
+			CreateImpl: func(*entities.User) error {
+				return nil
 			},
 		},
 	}
@@ -101,11 +107,11 @@ func TestUserCreateCorruptedJSON(t *testing.T) {
 	u := createAdminUser()
 	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
-			AuthorizeImpl: func(string) (entities.User, error) {
+			AuthorizeImpl: func(string) (*entities.User, error) {
 				return u, nil
 			},
-			CreateImpl: func(entities.User) (entities.User, error) {
-				return u, nil
+			CreateImpl: func(*entities.User) error {
+				return nil
 			},
 		},
 	}
@@ -126,11 +132,11 @@ func TestUserCreateFailed(t *testing.T) {
 	u := createAdminUser()
 	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
-			AuthorizeImpl: func(string) (entities.User, error) {
+			AuthorizeImpl: func(string) (*entities.User, error) {
 				return u, nil
 			},
-			CreateImpl: func(entities.User) (entities.User, error) {
-				return u, fmt.Errorf("Unable to create user")
+			CreateImpl: func(*entities.User) error {
+				return fmt.Errorf("Unable to create user")
 			},
 		},
 	}
@@ -152,11 +158,11 @@ func TestUserCreateSuccess(t *testing.T) {
 	u := createAdminUser()
 	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
-			AuthorizeImpl: func(string) (entities.User, error) {
+			AuthorizeImpl: func(string) (*entities.User, error) {
 				return u, nil
 			},
-			CreateImpl: func(entities.User) (entities.User, error) {
-				return u, nil
+			CreateImpl: func(*entities.User) error {
+				return nil
 			},
 		},
 	}
@@ -182,11 +188,11 @@ func TestAuthenticateCorruptedJSON(t *testing.T) {
 	u := createAdminUser()
 	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
-			AuthorizeImpl: func(string) (entities.User, error) {
+			AuthorizeImpl: func(string) (*entities.User, error) {
 				return u, nil
 			},
-			CreateImpl: func(entities.User) (entities.User, error) {
-				return u, nil
+			CreateImpl: func(*entities.User) error {
+				return nil
 			},
 		},
 	}
@@ -204,13 +210,14 @@ func TestAuthenticateCorruptedJSON(t *testing.T) {
 
 func TestAuthenticateFailed(t *testing.T) {
 	u := createAdminUser()
+	session := createSession()
 	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
-			AuthorizeImpl: func(string) (entities.User, error) {
+			AuthorizeImpl: func(string) (*entities.User, error) {
 				return u, fmt.Errorf("User interactor creation failed")
 			},
-			AuthenticateImpl: func(string, string) (entities.User, string, error) {
-				return u, "", fmt.Errorf("Authentication failed")
+			AuthenticateImpl: func(string, string) (*entities.User, *entities.Session, error) {
+				return u, session, fmt.Errorf("Authentication failed")
 			},
 		},
 	}
@@ -230,14 +237,15 @@ func TestAuthenticateFailed(t *testing.T) {
 
 func TestAuthenticateSuccess(t *testing.T) {
 	u := createAdminUser()
-	token := "123"
+	session := createSession()
+	token := session.ID
 	ctrl := &UserControllerImpl{
 		Interactor: &mocks.UserInteractorMock{
-			AuthorizeImpl: func(string) (entities.User, error) {
+			AuthorizeImpl: func(string) (*entities.User, error) {
 				return u, fmt.Errorf("User interactor creation failed")
 			},
-			AuthenticateImpl: func(string, string) (entities.User, string, error) {
-				return u, "123", nil
+			AuthenticateImpl: func(string, string) (*entities.User, *entities.Session, error) {
+				return u, session, nil
 			},
 		},
 	}
