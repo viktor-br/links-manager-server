@@ -38,6 +38,7 @@ type LoggerMock struct {
 // UserRepositoryMock mocks UserRepository.
 type UserRepositoryMock struct {
 	FindByUsernameImpl func(username string) (*entities.User, error)
+	StoreImpl          func(user *entities.User) error
 }
 
 // Log mocks logger main method.
@@ -148,4 +149,9 @@ func (writer *ResponseWriterMock) WriteHeader(statusCode int) {
 // FindByUsername mocks UserRepository method
 func (userRepositoryMock *UserRepositoryMock) FindByUsername(username string) (*entities.User, error) {
 	return userRepositoryMock.FindByUsernameImpl(username)
+}
+
+// Store mocks UserRepository Store method
+func (userRepositoryMock *UserRepositoryMock) Store(user *entities.User) error {
+	return userRepositoryMock.StoreImpl(user)
 }

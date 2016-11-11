@@ -15,6 +15,8 @@ var (
 	ErrNotExists = errors.New("User doesn't exist")
 	// ErrWrongCredentials wrong credentials provided
 	ErrWrongCredentials = errors.New("Wrong credentials")
+	// ErrTokenExpired - token expired
+	ErrTokenExpired = errors.New("Token expired")
 )
 
 // UserInteractor combines different implementations to process external requests.
@@ -73,10 +75,21 @@ func (userInteractor UserInteractorImpl) Authenticate(username, password string)
 
 // Create implements new user creation.
 func (userInteractor UserInteractorImpl) Create(user *entities.User) error {
-	return nil
+	user.ID = uuid.NewV4().String()
+	return userInteractor.userRepository.Store(user)
 }
 
 // Authorize checks if user authorized on system.
 func (userInteractor UserInteractorImpl) Authorize(token string) (*entities.User, error) {
-	return &entities.User{ID: uuid.NewV4().String(), Username: "test", Password: "test"}, nil
+	session, err := userInteractor.sessionRepository.FindByID(token)
+	if err != nil {
+		return nil, err
+	}
+	if session == nil {
+		return nil, errors.New("Session is nil")
+	}
+	if session.ExpiresOn.Before(time.Now()) {
+		return nil, ErrTokenExpired
+	}
+	return session.User, nil
 }

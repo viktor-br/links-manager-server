@@ -8,6 +8,7 @@ import (
 // UserRepository represent storage for user entities.
 type UserRepository interface {
 	FindByUsername(string) (*entities.User, error)
+	Store(*entities.User) error
 }
 
 // UserRepositoryImpl implements UserRepository.
@@ -22,4 +23,9 @@ func NewUserRepository() UserRepository {
 // FindByUsername search user by username.
 func (userRepository *UserRepositoryImpl) FindByUsername(username string) (*entities.User, error) {
 	return &entities.User{ID: uuid.NewV4().String(), Username: "test", Password: "test"}, nil
+}
+
+// Store saves user entity.
+func (userRepository *UserRepositoryImpl) Store(user *entities.User) error {
+	return nil
 }

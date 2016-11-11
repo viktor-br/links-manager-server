@@ -6,7 +6,13 @@ import (
 
 // SessionRepositoryMock mocks session repository implementation.
 type SessionRepositoryMock struct {
-	StoreImpl func(session *entities.Session) error
+	FindByIDImpl func(id string) (*entities.Session, error)
+	StoreImpl    func(session *entities.Session) error
+}
+
+// FindByID mocks search session by ID.
+func (sessionRepositoryMock *SessionRepositoryMock) FindByID(id string) (*entities.Session, error) {
+	return sessionRepositoryMock.FindByIDImpl(id)
 }
 
 // Store mocks SessionRepository Store method.

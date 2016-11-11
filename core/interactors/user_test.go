@@ -8,9 +8,10 @@ import (
 	"github.com/viktor-br/links-manager-server/core/entities"
 	"github.com/viktor-br/links-manager-server/core/security"
 	"testing"
+	"time"
 )
 
-func TestUserAuthenticate(t *testing.T) {
+func TestUserAuthenticateSuccess(t *testing.T) {
 	username := "username"
 	password := "password"
 
@@ -214,5 +215,172 @@ func TestUserAuthenticateSessionStoreFailed(t *testing.T) {
 
 	if session != nil {
 		t.Error("Expect session is nil")
+	}
+}
+
+func TestAuthorizeSuccess(t *testing.T) {
+	username := "username"
+	password := "password"
+	token := uuid.NewV4().String()
+	config := &config.AppConfigImpl{
+		SecretVal: "123",
+	}
+	sessionUser := &entities.User{ID: uuid.NewV4().String(), Username: username, Password: security.Hash(password, config.Secret())}
+
+	userRepository := &mocks.UserRepositoryMock{}
+	sessionRepository := &mocks.SessionRepositoryMock{
+		FindByIDImpl: func(id string) (*entities.Session, error) {
+			session := &entities.Session{
+				ID:        id,
+				User:      sessionUser,
+				ExpiresOn: time.Now().AddDate(0, 0, 1),
+			}
+
+			return session, nil
+		},
+	}
+	userInteractor, err := NewUserInteractor(config, userRepository, sessionRepository)
+
+	if err != nil {
+		t.Error("Unable to create user interactor")
+	}
+
+	user, err := userInteractor.Authorize(token)
+
+	if err != nil {
+		t.Errorf("Expect error nil, %s obtained", err.Error())
+	}
+
+	if user == nil {
+		t.Error("Expect user entity")
+	}
+}
+
+func TestAuthorizeSearchSessionFailed(t *testing.T) {
+	token := uuid.NewV4().String()
+	config := &config.AppConfigImpl{
+		SecretVal: "123",
+	}
+
+	userRepository := &mocks.UserRepositoryMock{}
+	sessionRepository := &mocks.SessionRepositoryMock{
+		FindByIDImpl: func(id string) (*entities.Session, error) {
+			return nil, errors.New("Session FindByID failed")
+		},
+	}
+	userInteractor, err := NewUserInteractor(config, userRepository, sessionRepository)
+
+	if err != nil {
+		t.Error("Unable to create user interactor")
+	}
+
+	user, err := userInteractor.Authorize(token)
+
+	if err == nil {
+		t.Error("Expect FindByID failed error")
+	}
+
+	if user != nil {
+		t.Error("Expect user is nil")
+	}
+}
+
+func TestAuthorizeSearchSessionFailedSessionEmpty(t *testing.T) {
+	token := uuid.NewV4().String()
+	config := &config.AppConfigImpl{
+		SecretVal: "123",
+	}
+
+	userRepository := &mocks.UserRepositoryMock{}
+	sessionRepository := &mocks.SessionRepositoryMock{
+		FindByIDImpl: func(id string) (*entities.Session, error) {
+			return nil, nil
+		},
+	}
+	userInteractor, err := NewUserInteractor(config, userRepository, sessionRepository)
+
+	if err != nil {
+		t.Error("Unable to create user interactor")
+	}
+
+	user, err := userInteractor.Authorize(token)
+
+	if err == nil {
+		t.Error("Session is nil error expected")
+	}
+
+	if user != nil {
+		t.Error("Expect user nil")
+	}
+}
+
+func TestAuthorizeTokenExpired(t *testing.T) {
+	username := "username"
+	password := "password"
+	token := uuid.NewV4().String()
+	config := &config.AppConfigImpl{
+		SecretVal: "123",
+	}
+	sessionUser := &entities.User{ID: uuid.NewV4().String(), Username: username, Password: security.Hash(password, config.Secret())}
+
+	userRepository := &mocks.UserRepositoryMock{}
+	sessionRepository := &mocks.SessionRepositoryMock{
+		FindByIDImpl: func(id string) (*entities.Session, error) {
+			session := &entities.Session{
+				ID:        id,
+				User:      sessionUser,
+				ExpiresOn: time.Now().AddDate(0, 0, -1),
+			}
+
+			return session, nil
+		},
+	}
+	userInteractor, err := NewUserInteractor(config, userRepository, sessionRepository)
+
+	if err != nil {
+		t.Error("Unable to create user interactor")
+	}
+
+	user, err := userInteractor.Authorize(token)
+
+	if err == nil {
+		t.Error("Expect is not nil")
+	} else if err != ErrTokenExpired {
+		t.Errorf("Expect ErrTokenExpired error, %s obtained", err.Error())
+	}
+
+	if user != nil {
+		t.Error("Expect user nil")
+	}
+}
+
+func TestCreateSuccess(t *testing.T) {
+	username := "username"
+	password := "password"
+	config := &config.AppConfigImpl{
+		SecretVal: "123",
+	}
+	user := &entities.User{Username: username, Password: security.Hash(password, config.Secret())}
+
+	userRepository := &mocks.UserRepositoryMock{
+		StoreImpl: func(user *entities.User) error {
+			return nil
+		},
+	}
+	sessionRepository := &mocks.SessionRepositoryMock{}
+	userInteractor, err := NewUserInteractor(config, userRepository, sessionRepository)
+
+	if err != nil {
+		t.Error("Unable to create user interactor")
+	}
+
+	err = userInteractor.Create(user)
+
+	if err != nil {
+		t.Errorf("Expect error nil, %s obtained", err.Error())
+	}
+
+	if user.ID == "" {
+		t.Error("Expect user.ID is populated")
 	}
 }
