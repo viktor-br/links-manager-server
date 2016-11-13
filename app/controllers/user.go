@@ -241,8 +241,8 @@ func (userCtrl *UserControllerImpl) Authenticate(w http.ResponseWriter, r *http.
 			log.LogRemoteAddr, r.RemoteAddr,
 			log.LogHTTPStatus, http.StatusForbidden,
 			log.LogController, method,
-			log.LogUserID, user.ID,
-			log.LogMessage, fmt.Sprintf("json parse failed: %s", err.Error()),
+			log.LogUserID, userAuth.Username,
+			log.LogMessage, fmt.Sprintf("authentication failed: %s", err.Error()),
 		)
 		return
 	}

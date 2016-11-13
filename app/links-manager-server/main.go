@@ -19,11 +19,12 @@ func main() {
 	logger = log.NewContext(logger).With("ts", log.DefaultTimestampUTC)
 	logger = log.NewContext(logger).With("instance_id", 123)
 
+	// TODO Move it to proper place
 	config := &config.AppConfigImpl{
 		SecretVal: "asdGeyfkN5dsMBDtw840",
 	}
 
-	userRepository := implementation.NewUserRepository()
+	userRepository := implementation.NewUserRepository(config)
 	sessionRepository := implementation.NewSessionRepository()
 	userInteractor, err := interactors.NewUserInteractor(config, userRepository, sessionRepository)
 	if err != nil {
