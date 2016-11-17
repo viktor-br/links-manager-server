@@ -1,5 +1,7 @@
 package entities
 
+import "time"
+
 const (
 	// RoleRegularUser code of regular user
 	RoleRegularUser = iota
@@ -9,10 +11,12 @@ const (
 
 // User represent user entity
 type User struct {
-	ID       string
-	Username string
-	Password string
-	Role     int
+	ID        string
+	Username  string
+	Password  string
+	CreatedAt time.Time
+	UpdatedAt *time.Time
+	Role      int
 }
 
 // IsAllowedCreateUser checks if user allowed to create another users.

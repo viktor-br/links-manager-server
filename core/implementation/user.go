@@ -3,8 +3,9 @@ package implementation
 import (
 	"github.com/satori/go.uuid"
 	"github.com/viktor-br/links-manager-server/core/entities"
-	"github.com/viktor-br/links-manager-server/core/security"
 	"github.com/viktor-br/links-manager-server/core/config"
+	"github.com/viktor-br/links-manager-server/core/dao"
+	reform "gopkg.in/reform.v1"
 )
 
 // UserRepository represent storage for user entities.
@@ -16,21 +17,59 @@ type UserRepository interface {
 // UserRepositoryImpl implements UserRepository.
 type UserRepositoryImpl struct {
 	config config.AppConfig
+	db *reform.DB
 }
 
 // NewUserRepository create UserRepository instance.
-func NewUserRepository(config config.AppConfig) UserRepository {
+func NewUserRepository(config config.AppConfig, db *reform.DB) UserRepository {
 	return &UserRepositoryImpl{
 		config: config,
+		db: db,
 	}
 }
 
 // FindByUsername search user by username.
 func (userRepository *UserRepositoryImpl) FindByUsername(username string) (*entities.User, error) {
-	return &entities.User{ID: uuid.NewV4().String(), Username: "test", Password: security.Hash("test", userRepository.config.Secret())}, nil
+	userStruct := dao.UserTable.NewStruct()
+	err := userRepository.db.FindOneTo(userStruct, dao.UserFieldNameEmail, username)
+	if err != nil {
+		return nil, err
+	}
+	userRecord := userStruct.(*dao.User)
+	return CreateUserEntityFromDAO(userRecord), nil
 }
 
 // Store saves user entity.
 func (userRepository *UserRepositoryImpl) Store(user *entities.User) error {
-	return nil
+	if user.ID == "" {
+		user.ID = uuid.NewV4().String()
+	}
+	userRecord := CreateUserDAOFromEntity(user)
+
+	return userRepository.db.Save(userRecord)
 }
+
+// CreateUserDAOFromEntity create DAO for core.entities.User
+func CreateUserDAOFromEntity(user *entities.User) *dao.User {
+	return &dao.User{
+		ID:        user.ID,
+		Email:     user.Username,
+		Password:  user.Password,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Role:      user.Role,
+	}
+}
+
+// CreateUserEntityFromDAO create entities.User pointer from DAO
+func CreateUserEntityFromDAO(userRecord *dao.User) *entities.User {
+	return &entities.User{
+		ID:        userRecord.ID,
+		Username:  userRecord.Email,
+		Password:  userRecord.Password,
+		CreatedAt: userRecord.CreatedAt,
+		UpdatedAt: userRecord.UpdatedAt,
+		Role:      userRecord.Role,
+	}
+}
+

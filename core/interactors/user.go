@@ -15,6 +15,8 @@ var (
 	ErrNotExists = errors.New("User doesn't exist")
 	// ErrWrongCredentials wrong credentials provided
 	ErrWrongCredentials = errors.New("Wrong credentials")
+	// ErrUnauthorized authorization failed
+	ErrUnauthorized = errors.New("Not authorized")
 	// ErrTokenExpired - token expired
 	ErrTokenExpired = errors.New("Token expired")
 )
@@ -63,8 +65,8 @@ func (userInteractor UserInteractorImpl) Authenticate(username, password string)
 	}
 
 	session := new(entities.Session)
-	session.ExpiresOn = time.Now().Add(24 * time.Hour)
-	// TODO save RemoteIP and UserAgent
+	session.ExpiresAt = time.Now().Add(24 * time.Hour)
+	// TODO save RemoteIP
 	err = userInteractor.sessionRepository.Store(session)
 	if err != nil {
 		return nil, nil, err
@@ -86,10 +88,11 @@ func (userInteractor UserInteractorImpl) Authorize(token string) (*entities.User
 		return nil, err
 	}
 	if session == nil {
-		return nil, errors.New("Session is nil")
+		return nil, ErrUnauthorized
 	}
-	if session.ExpiresOn.Before(time.Now()) {
+	if session.ExpiresAt.Before(time.Now()) {
 		return nil, ErrTokenExpired
 	}
+
 	return session.User, nil
 }

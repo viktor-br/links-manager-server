@@ -6,11 +6,9 @@ import "time"
 type Session struct {
 	ID         string
 	User       *User
-	UserAgent  string
 	RemoteAddr string
-	CreatedOn  time.Time
-	UpdatedOn  time.Time
-	ExpiresOn  time.Time
+	CreatedAt  time.Time
+	ExpiresAt  time.Time
 }
 
 // IsValid checks if session instance is valid.
@@ -20,5 +18,5 @@ func (session *Session) IsValid() bool {
 
 // IsExpired checks if session is expired.
 func (session *Session) IsExpired() bool {
-	return session.ExpiresOn.Sub(time.Now()) > 0
+	return session.ExpiresAt.Sub(time.Now()) > 0
 }

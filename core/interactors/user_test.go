@@ -233,7 +233,7 @@ func TestAuthorizeSuccess(t *testing.T) {
 			session := &entities.Session{
 				ID:        id,
 				User:      sessionUser,
-				ExpiresOn: time.Now().AddDate(0, 0, 1),
+				ExpiresAt: time.Now().AddDate(0, 0, 1),
 			}
 
 			return session, nil
@@ -329,7 +329,7 @@ func TestAuthorizeTokenExpired(t *testing.T) {
 			session := &entities.Session{
 				ID:        id,
 				User:      sessionUser,
-				ExpiresOn: time.Now().AddDate(0, 0, -1),
+				ExpiresAt: time.Now().AddDate(0, 0, -1),
 			}
 
 			return session, nil
