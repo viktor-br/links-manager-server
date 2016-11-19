@@ -2,7 +2,6 @@ package implementation
 
 import (
 	"github.com/satori/go.uuid"
-	"github.com/viktor-br/links-manager-server/core/config"
 	"github.com/viktor-br/links-manager-server/core/entities"
 	"gopkg.in/reform.v1"
 	"gopkg.in/reform.v1/dialects/postgresql"
@@ -11,14 +10,12 @@ import (
 )
 
 func TestSessionCreate(t *testing.T) {
-	conn, err := setUpConnection()
+	conn, config, err := setUp()
 	if err != nil {
 		t.Errorf("connection init failed: %s", err.Error())
 		return
 	}
-	config := &config.AppConfigImpl{
-		SecretVal: "123",
-	}
+
 	DB := reform.NewDB(conn, postgresql.Dialect, nil)
 
 	sessionRepository := NewSessionRepository(DB)
@@ -26,11 +23,11 @@ func TestSessionCreate(t *testing.T) {
 	userRepository := NewUserRepository(config, DB)
 
 	userID := uuid.NewV4().String()
-	email := "test@test.com"
+	username := "test@test.com"
 	t1 := time.Now()
 	user := &entities.User{
 		ID:        userID,
-		Username:  email,
+		Username:  username,
 		Password:  "test",
 		CreatedAt: time.Now().AddDate(0, 0, -1),
 		UpdatedAt: &t1,
@@ -78,11 +75,11 @@ func CompareSessionEntities(session1, session2 *entities.Session) bool {
 		return false
 	}
 
-	if session1.CreatedAt.Sub(session2.CreatedAt).Seconds() == 0 {
+	if session1.CreatedAt.Sub(session2.CreatedAt).Seconds() >= 1 {
 		return false
 	}
 
-	if session1.ExpiresAt.Sub(session2.ExpiresAt).Seconds() == 0 {
+	if session1.ExpiresAt.Sub(session2.ExpiresAt).Seconds() >= 1 {
 		return false
 	}
 

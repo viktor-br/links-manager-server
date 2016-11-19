@@ -3,35 +3,31 @@ package implementation
 import (
 	_ "github.com/lib/pq"
 	"github.com/satori/go.uuid"
-	"github.com/viktor-br/links-manager-server/core/config"
 	"github.com/viktor-br/links-manager-server/core/entities"
+	"github.com/viktor-br/links-manager-server/core/security"
 	reform "gopkg.in/reform.v1"
 	"gopkg.in/reform.v1/dialects/postgresql"
 	"testing"
 	"time"
-	"github.com/viktor-br/links-manager-server/core/security"
 )
 
 func TestUserCreate(t *testing.T) {
-	conn, err := setUpConnection()
+	conn, config, err := setUp()
 	if err != nil {
 		t.Errorf("connection init failed: %s", err.Error())
 		return
 	}
 	DB := reform.NewDB(conn, postgresql.Dialect, nil)
-	config := &config.AppConfigImpl{
-		SecretVal: "asdGeyfkN5dsMBDtw840",
-	}
 
 	userRepository := NewUserRepository(config, DB)
 
 	id := uuid.NewV4().String()
-	email := "test@test.com"
+	username := "test@test.com"
 	password := "test"
 	t1 := time.Now()
 	user := &entities.User{
 		ID:        id,
-		Username:  email,
+		Username:  username,
 		Password:  security.Hash(password, config.Secret()),
 		CreatedAt: time.Now().AddDate(0, 0, -1),
 		UpdatedAt: &t1,
@@ -44,7 +40,7 @@ func TestUserCreate(t *testing.T) {
 		return
 	}
 
-	savedUser, err := userRepository.FindByUsername(email)
+	savedUser, err := userRepository.FindByUsername(username)
 	if err != nil {
 		t.Errorf("FindByUsername() failed: %s", err.Error())
 		return
@@ -64,7 +60,7 @@ func CompareUserEntities(user1, user2 *entities.User) bool {
 		return false
 	}
 
-	if user1.CreatedAt.Sub(user2.CreatedAt).Seconds() == 0 {
+	if user1.CreatedAt.Sub(user2.CreatedAt).Seconds() >= 1 {
 		return false
 	}
 
@@ -76,7 +72,7 @@ func CompareUserEntities(user1, user2 *entities.User) bool {
 		return false
 	}
 
-	if user1.UpdatedAt != user2.UpdatedAt && user1.UpdatedAt.Sub(*user2.UpdatedAt).Seconds() > 0 {
+	if user1.UpdatedAt != user2.UpdatedAt && user1.UpdatedAt.Sub(*user2.UpdatedAt).Seconds() >= 1 {
 		return false
 	}
 

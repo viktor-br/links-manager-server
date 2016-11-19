@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	// UserFieldNameEmail email field name
-	UserFieldNameEmail string = "email"
+	// UserFieldNameUsername username field name
+	UserFieldNameUsername string = "username"
 )
 
 // User implement user DAO
@@ -14,7 +14,7 @@ const (
 //reform:users
 type User struct {
 	ID        string     `reform:"id,pk"`
-	Email     string     `reform:"email"`
+	Username  string     `reform:"username"`
 	Password  string     `reform:"password"`
 	CreatedAt time.Time  `reform:"created_at"`
 	UpdatedAt *time.Time `reform:"updated_at"`

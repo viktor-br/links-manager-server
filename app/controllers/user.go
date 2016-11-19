@@ -146,8 +146,8 @@ func (userCtrl *UserControllerImpl) Create(w http.ResponseWriter, r *http.Reques
 
 	// Create user
 	err = userCtrl.Interactor.Create(&user)
-	w.WriteHeader(http.StatusConflict)
 	if err == interactors.ErrUserAlreadyExists {
+		w.WriteHeader(http.StatusConflict)
 		userCtrl.Log(
 			log.LogRequestURI, r.RequestURI,
 			log.LogRemoteAddr, r.RemoteAddr,

@@ -27,7 +27,7 @@ func (v *userTableType) Name() string {
 
 // Columns returns a new slice of column names for that view or table in SQL database.
 func (v *userTableType) Columns() []string {
-	return []string{"id", "email", "password", "created_at", "updated_at", "role"}
+	return []string{"id", "username", "password", "created_at", "updated_at", "role"}
 }
 
 // NewStruct makes a new struct for that view or table.
@@ -47,7 +47,7 @@ func (v *userTableType) PKColumnIndex() uint {
 
 // UserTable represents users view or table in SQL database.
 var UserTable = &userTableType{
-	s: parse.StructInfo{Type: "User", SQLSchema: "", SQLName: "users", Fields: []parse.FieldInfo{{Name: "ID", PKType: "string", Column: "id"}, {Name: "Email", PKType: "", Column: "email"}, {Name: "Password", PKType: "", Column: "password"}, {Name: "CreatedAt", PKType: "", Column: "created_at"}, {Name: "UpdatedAt", PKType: "", Column: "updated_at"}, {Name: "Role", PKType: "", Column: "role"}}, PKFieldIndex: 0},
+	s: parse.StructInfo{Type: "User", SQLSchema: "", SQLName: "users", Fields: []parse.FieldInfo{{Name: "ID", PKType: "string", Column: "id"}, {Name: "Username", PKType: "", Column: "username"}, {Name: "Password", PKType: "", Column: "password"}, {Name: "CreatedAt", PKType: "", Column: "created_at"}, {Name: "UpdatedAt", PKType: "", Column: "updated_at"}, {Name: "Role", PKType: "", Column: "role"}}, PKFieldIndex: 0},
 	z: new(User).Values(),
 }
 
@@ -55,7 +55,7 @@ var UserTable = &userTableType{
 func (s User) String() string {
 	res := make([]string, 6)
 	res[0] = "ID: " + reform.Inspect(s.ID, true)
-	res[1] = "Email: " + reform.Inspect(s.Email, true)
+	res[1] = "Username: " + reform.Inspect(s.Username, true)
 	res[2] = "Password: " + reform.Inspect(s.Password, true)
 	res[3] = "CreatedAt: " + reform.Inspect(s.CreatedAt, true)
 	res[4] = "UpdatedAt: " + reform.Inspect(s.UpdatedAt, true)
@@ -68,7 +68,7 @@ func (s User) String() string {
 func (s *User) Values() []interface{} {
 	return []interface{}{
 		s.ID,
-		s.Email,
+		s.Username,
 		s.Password,
 		s.CreatedAt,
 		s.UpdatedAt,
@@ -81,7 +81,7 @@ func (s *User) Values() []interface{} {
 func (s *User) Pointers() []interface{} {
 	return []interface{}{
 		&s.ID,
-		&s.Email,
+		&s.Username,
 		&s.Password,
 		&s.CreatedAt,
 		&s.UpdatedAt,

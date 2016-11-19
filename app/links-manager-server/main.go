@@ -19,12 +19,23 @@ import (
 )
 
 func main() {
+	port := "8080"
+	if val := os.Getenv("LMS_PORT"); val != "" {
+		port = val
+	}
+	connectionStr := os.Getenv("LMS_MAIN_STORAGE_CONNECTION")
+	storageType := os.Getenv("LMS_MAIN_STORAGE_TYPE")
+	secret := os.Getenv("LMS_SECRET")
+	instanceID := os.Getenv("LMS_INSTANCE_ID")
+
 	var defaultLlogger log.Logger
 	defaultLlogger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
 	defaultLlogger = log.NewContext(defaultLlogger).With("ts", log.DefaultTimestampUTC)
-	defaultLlogger = log.NewContext(defaultLlogger).With("instance_id", 123)
+	if instanceID != "" {
+		defaultLlogger = log.NewContext(defaultLlogger).With("instance_id", instanceID)
+	}
 
-	conn, err := sql.Open("postgres", "postgres://localhost:5432/test?sslmode=disable")
+	conn, err := sql.Open(storageType, connectionStr)
 	if err != nil {
 		defaultLlogger.Log(l.LogMessage, fmt.Sprintf("Faile to create conn: %s", err.Error()))
 		return
@@ -34,7 +45,7 @@ func main() {
 
 	// TODO Move setting values to proper place
 	config := &config.AppConfigImpl{
-		SecretVal: "asdGeyfkN5dsMBDtw840",
+		SecretVal: secret,
 	}
 
 	userRepository := implementation.NewUserRepository(config, DB)
@@ -50,5 +61,5 @@ func main() {
 
 	http.Handle("/api/v1/user", userHandler)
 	http.Handle("/api/v1/user/login", userAuthenticateHandler)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":"+port, nil)
 }
