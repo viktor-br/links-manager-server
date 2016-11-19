@@ -38,7 +38,7 @@ func main() {
 	}
 
 	userRepository := implementation.NewUserRepository(config, DB)
-	sessionRepository := implementation.NewSessionRepository()
+	sessionRepository := implementation.NewSessionRepository(DB)
 	userInteractor, err := interactors.NewUserInteractor(config, userRepository, sessionRepository)
 	if err != nil {
 		defaultLlogger.Log(l.LogMessage, fmt.Sprintf("Faile to start, unable to create interactor %s", err.Error()))

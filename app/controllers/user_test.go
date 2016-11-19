@@ -216,7 +216,7 @@ func TestAuthenticateFailed(t *testing.T) {
 			AuthorizeImpl: func(string) (*entities.User, error) {
 				return u, fmt.Errorf("User interactor creation failed")
 			},
-			AuthenticateImpl: func(string, string) (*entities.User, *entities.Session, error) {
+			AuthenticateImpl: func(string, string, string) (*entities.User, *entities.Session, error) {
 				return u, session, fmt.Errorf("Authentication failed")
 			},
 		},
@@ -244,7 +244,7 @@ func TestAuthenticateSuccess(t *testing.T) {
 			AuthorizeImpl: func(string) (*entities.User, error) {
 				return u, fmt.Errorf("User interactor creation failed")
 			},
-			AuthenticateImpl: func(string, string) (*entities.User, *entities.Session, error) {
+			AuthenticateImpl: func(string, string, string) (*entities.User, *entities.Session, error) {
 				return u, session, nil
 			},
 		},

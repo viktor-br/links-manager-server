@@ -19,11 +19,13 @@ var (
 	ErrUnauthorized = errors.New("Not authorized")
 	// ErrTokenExpired - token expired
 	ErrTokenExpired = errors.New("Token expired")
+	// ErrUserAlreadyExists user with the same name already exists
+	ErrUserAlreadyExists = errors.New("User exists")
 )
 
 // UserInteractor combines different implementations to process external requests.
 type UserInteractor interface {
-	Authenticate(username, password string) (*entities.User, *entities.Session, error)
+	Authenticate(username, password, remoteAddr string) (*entities.User, *entities.Session, error)
 	Authorize(string) (*entities.User, error)
 	Create(*entities.User) error
 }
@@ -49,7 +51,7 @@ func NewUserInteractor(
 }
 
 // Authenticate generates access token.
-func (userInteractor UserInteractorImpl) Authenticate(username, password string) (*entities.User, *entities.Session, error) {
+func (userInteractor UserInteractorImpl) Authenticate(username, password, remoteAddr string) (*entities.User, *entities.Session, error) {
 	userEntity, err := userInteractor.userRepository.FindByUsername(username)
 	if err != nil {
 		return nil, nil, err
@@ -65,6 +67,9 @@ func (userInteractor UserInteractorImpl) Authenticate(username, password string)
 	}
 
 	session := new(entities.Session)
+	session.User = userEntity
+	session.RemoteAddr = remoteAddr
+	session.CreatedAt = time.Now()
 	session.ExpiresAt = time.Now().Add(24 * time.Hour)
 	// TODO save RemoteIP
 	err = userInteractor.sessionRepository.Store(session)
@@ -77,7 +82,17 @@ func (userInteractor UserInteractorImpl) Authenticate(username, password string)
 
 // Create implements new user creation.
 func (userInteractor UserInteractorImpl) Create(user *entities.User) error {
+	// Check user doesn't exist
+	userEntity, err := userInteractor.userRepository.FindByUsername(user.Username)
+	if err != nil {
+		return err
+	}
+	if userEntity != nil {
+		return ErrUserAlreadyExists
+	}
 	user.ID = uuid.NewV4().String()
+	user.Password = security.Hash(user.Password, userInteractor.config.Secret())
+	user.CreatedAt = time.Now()
 	return userInteractor.userRepository.Store(user)
 }
 

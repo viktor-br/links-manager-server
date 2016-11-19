@@ -7,6 +7,7 @@ import (
 	"github.com/viktor-br/links-manager-server/core/entities"
 	"github.com/viktor-br/links-manager-server/core/interactors"
 	"io/ioutil"
+	"net"
 	"net/http"
 )
 
@@ -145,6 +146,19 @@ func (userCtrl *UserControllerImpl) Create(w http.ResponseWriter, r *http.Reques
 
 	// Create user
 	err = userCtrl.Interactor.Create(&user)
+	w.WriteHeader(http.StatusConflict)
+	if err == interactors.ErrUserAlreadyExists {
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogHTTPStatus, http.StatusConflict,
+			log.LogController, method,
+			log.LogToken, userIdentifier,
+			log.LogUserID, currentUser.ID,
+			log.LogMessage, fmt.Sprintf("unable to create user %s: %s", user.Username, err.Error()),
+		)
+		return
+	}
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		userCtrl.Log(
@@ -197,7 +211,7 @@ func (userCtrl *UserControllerImpl) Create(w http.ResponseWriter, r *http.Reques
 		log.LogController, method,
 		log.LogToken, userIdentifier,
 		log.LogUserID, currentUser.ID,
-		log.LogMessage, fmt.Sprintf("user % created successfully", user.Username),
+		log.LogMessage, fmt.Sprintf("user %s created successfully", user.Username),
 	)
 }
 
@@ -233,7 +247,18 @@ func (userCtrl *UserControllerImpl) Authenticate(w http.ResponseWriter, r *http.
 		return
 	}
 
-	user, session, err := userCtrl.Interactor.Authenticate(userAuth.Username, userAuth.Password)
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+
+	if err != nil {
+		// Just log this error, but it's not critical
+		userCtrl.Log(
+			log.LogRequestURI, r.RequestURI,
+			log.LogRemoteAddr, r.RemoteAddr,
+			log.LogController, method,
+			log.LogMessage, fmt.Sprintf("split host failed: %s", err.Error()),
+		)
+	}
+	user, session, err := userCtrl.Interactor.Authenticate(userAuth.Username, userAuth.Password, ip)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		userCtrl.Log(

@@ -14,6 +14,7 @@ import (
 func TestUserAuthenticateSuccess(t *testing.T) {
 	username := "username"
 	password := "password"
+	ip := "192.168.0.11"
 
 	config := &config.AppConfigImpl{
 		SecretVal: "123",
@@ -37,7 +38,7 @@ func TestUserAuthenticateSuccess(t *testing.T) {
 		t.Error("Unable to create user interactor")
 	}
 
-	user, session, err := userInteractor.Authenticate(username, password)
+	user, session, err := userInteractor.Authenticate(username, password, ip)
 
 	if err != nil {
 		t.Errorf("Expect error nil, %s obtained", err.Error())
@@ -55,6 +56,7 @@ func TestUserAuthenticateSuccess(t *testing.T) {
 func TestUserAuthenticateUserSearchFailed(t *testing.T) {
 	username := "username"
 	password := "password"
+	ip := "192.168.0.11"
 
 	config := &config.AppConfigImpl{
 		SecretVal: "123",
@@ -78,7 +80,7 @@ func TestUserAuthenticateUserSearchFailed(t *testing.T) {
 		t.Error("Unable to create user interactor")
 	}
 
-	user, session, err := userInteractor.Authenticate(username, password)
+	user, session, err := userInteractor.Authenticate(username, password, ip)
 
 	if err == nil {
 		t.Error("Expect user not found error, nil obtained")
@@ -96,6 +98,7 @@ func TestUserAuthenticateUserSearchFailed(t *testing.T) {
 func TestUserAuthenticateUserNotFound(t *testing.T) {
 	username := "username"
 	password := "password"
+	ip := "192.168.0.11"
 
 	config := &config.AppConfigImpl{
 		SecretVal: "123",
@@ -119,7 +122,7 @@ func TestUserAuthenticateUserNotFound(t *testing.T) {
 		t.Error("Unable to create user interactor")
 	}
 
-	user, session, err := userInteractor.Authenticate(username, password)
+	user, session, err := userInteractor.Authenticate(username, password, ip)
 
 	if err != ErrNotExists {
 		t.Errorf("Expect ErrNotExists error, %s obtained", err.Error())
@@ -137,6 +140,7 @@ func TestUserAuthenticateUserNotFound(t *testing.T) {
 func TestUserAuthenticateWrongPasswordHash(t *testing.T) {
 	username := "username"
 	password := "password"
+	ip := "192.168.0.11"
 
 	config := &config.AppConfigImpl{
 		SecretVal: "123",
@@ -160,7 +164,7 @@ func TestUserAuthenticateWrongPasswordHash(t *testing.T) {
 		t.Error("Unable to create user interactor")
 	}
 
-	user, session, err := userInteractor.Authenticate(username, password)
+	user, session, err := userInteractor.Authenticate(username, password, ip)
 
 	if err != ErrWrongCredentials {
 		t.Errorf("Expect ErrWrongCredentials error, %s obtained", err.Error())
@@ -178,6 +182,7 @@ func TestUserAuthenticateWrongPasswordHash(t *testing.T) {
 func TestUserAuthenticateSessionStoreFailed(t *testing.T) {
 	username := "username"
 	password := "password"
+	ip := "192.168.0.11"
 
 	config := &config.AppConfigImpl{
 		SecretVal: "123",
@@ -203,7 +208,7 @@ func TestUserAuthenticateSessionStoreFailed(t *testing.T) {
 		t.Error("Unable to create user interactor")
 	}
 
-	user, session, err := userInteractor.Authenticate(username, password)
+	user, session, err := userInteractor.Authenticate(username, password, ip)
 
 	if err != ErrSessionStoreFailed {
 		t.Errorf("Expect ErrSessionStoreFailed error, %s obtained", err.Error())
@@ -354,6 +359,66 @@ func TestAuthorizeTokenExpired(t *testing.T) {
 	}
 }
 
+func TestCreateUserAlreadyExists(t *testing.T) {
+	username := "username"
+	password := "password"
+	config := &config.AppConfigImpl{
+		SecretVal: "123",
+	}
+	user := &entities.User{Username: username, Password: security.Hash(password, config.Secret())}
+
+	userRepository := &mocks.UserRepositoryMock{
+		StoreImpl: func(user *entities.User) error {
+			return nil
+		},
+		FindByUsernameImpl: func(username string) (*entities.User, error) {
+			return &entities.User{Username: username, Password: security.Hash(password, config.Secret())}, nil
+		},
+	}
+	sessionRepository := &mocks.SessionRepositoryMock{}
+	userInteractor, err := NewUserInteractor(config, userRepository, sessionRepository)
+
+	if err != nil {
+		t.Error("Unable to create user interactor")
+	}
+
+	err = userInteractor.Create(user)
+
+	if err != ErrUserAlreadyExists {
+		t.Errorf("Expect UserAlreadyExists error", err.Error())
+	}
+}
+
+func TestCreateFindByUsernameFailed(t *testing.T) {
+	username := "username"
+	password := "password"
+	config := &config.AppConfigImpl{
+		SecretVal: "123",
+	}
+	user := &entities.User{Username: username, Password: security.Hash(password, config.Secret())}
+
+	userRepository := &mocks.UserRepositoryMock{
+		StoreImpl: func(user *entities.User) error {
+			return nil
+		},
+		FindByUsernameImpl: func(username string) (*entities.User, error) {
+			return nil, errors.New("Something goes wrong")
+		},
+	}
+	sessionRepository := &mocks.SessionRepositoryMock{}
+	userInteractor, err := NewUserInteractor(config, userRepository, sessionRepository)
+
+	if err != nil {
+		t.Error("Unable to create user interactor")
+	}
+
+	err = userInteractor.Create(user)
+
+	if err == nil {
+		t.Errorf("Expect database error")
+	}
+}
+
 func TestCreateSuccess(t *testing.T) {
 	username := "username"
 	password := "password"
@@ -365,6 +430,9 @@ func TestCreateSuccess(t *testing.T) {
 	userRepository := &mocks.UserRepositoryMock{
 		StoreImpl: func(user *entities.User) error {
 			return nil
+		},
+		FindByUsernameImpl: func(username string) (*entities.User, error) {
+			return nil, nil
 		},
 	}
 	sessionRepository := &mocks.SessionRepositoryMock{}

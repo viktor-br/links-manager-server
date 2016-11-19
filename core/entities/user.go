@@ -1,6 +1,8 @@
 package entities
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	// RoleRegularUser code of regular user

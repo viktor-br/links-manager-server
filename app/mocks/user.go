@@ -21,7 +21,7 @@ type RequestBodyMock struct {
 
 // UserInteractorMock mocks UserInteractorImpl
 type UserInteractorMock struct {
-	AuthenticateImpl func(username, password string) (*entities.User, *entities.Session, error)
+	AuthenticateImpl func(username, password, remoteAddr string) (*entities.User, *entities.Session, error)
 	AuthorizeImpl    func(string) (*entities.User, error)
 	CreateImpl       func(*entities.User) error
 }
@@ -62,8 +62,8 @@ func (userControllerMock *UserControllerMock) Log(args ...interface{}) {
 }
 
 // Authenticate mocks method via implementation method (allow simulate errors and etc).
-func (userInteractorMock UserInteractorMock) Authenticate(username, password string) (*entities.User, *entities.Session, error) {
-	return userInteractorMock.AuthenticateImpl(username, password)
+func (userInteractorMock UserInteractorMock) Authenticate(username, password, remoteAddr string) (*entities.User, *entities.Session, error) {
+	return userInteractorMock.AuthenticateImpl(username, password, remoteAddr)
 }
 
 // Authorize mocks method via implementation method (allow simulate errors and etc).

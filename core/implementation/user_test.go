@@ -9,6 +9,7 @@ import (
 	"gopkg.in/reform.v1/dialects/postgresql"
 	"testing"
 	"time"
+	"github.com/viktor-br/links-manager-server/core/security"
 )
 
 func TestUserCreate(t *testing.T) {
@@ -19,18 +20,19 @@ func TestUserCreate(t *testing.T) {
 	}
 	DB := reform.NewDB(conn, postgresql.Dialect, nil)
 	config := &config.AppConfigImpl{
-		SecretVal: "123",
+		SecretVal: "asdGeyfkN5dsMBDtw840",
 	}
 
 	userRepository := NewUserRepository(config, DB)
 
 	id := uuid.NewV4().String()
 	email := "test@test.com"
+	password := "test"
 	t1 := time.Now()
 	user := &entities.User{
 		ID:        id,
 		Username:  email,
-		Password:  "test",
+		Password:  security.Hash(password, config.Secret()),
 		CreatedAt: time.Now().AddDate(0, 0, -1),
 		UpdatedAt: &t1,
 		Role:      entities.RoleAdminUser,
