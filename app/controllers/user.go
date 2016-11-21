@@ -115,11 +115,11 @@ func (userCtrl *UserControllerImpl) Create(w http.ResponseWriter, r *http.Reques
 
 	input, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		userCtrl.Log(
 			log.LogRequestURI, r.RequestURI,
 			log.LogRemoteAddr, r.RemoteAddr,
-			log.LogHTTPStatus, http.StatusBadRequest,
+			log.LogHTTPStatus, http.StatusInternalServerError,
 			log.LogController, method,
 			log.LogToken, userIdentifier,
 			log.LogUserID, currentUser.ID,
@@ -160,11 +160,11 @@ func (userCtrl *UserControllerImpl) Create(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusInternalServerError)
 		userCtrl.Log(
 			log.LogRequestURI, r.RequestURI,
 			log.LogRemoteAddr, r.RemoteAddr,
-			log.LogHTTPStatus, http.StatusNotFound,
+			log.LogHTTPStatus, http.StatusInternalServerError,
 			log.LogController, method,
 			log.LogToken, userIdentifier,
 			log.LogUserID, currentUser.ID,
@@ -223,7 +223,7 @@ func (userCtrl *UserControllerImpl) Authenticate(w http.ResponseWriter, r *http.
 
 	input, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusInternalServerError)
 		userCtrl.Log(
 			log.LogRequestURI, r.RequestURI,
 			log.LogRemoteAddr, r.RemoteAddr,

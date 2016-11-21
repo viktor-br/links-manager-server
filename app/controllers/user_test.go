@@ -149,8 +149,8 @@ func TestUserCreateFailed(t *testing.T) {
 
 	ctrl.Create(w, r)
 
-	if w.WrittenHeader != http.StatusNotFound {
-		t.Errorf("Expect %d status code, received %d", http.StatusNotFound, w.WrittenHeader)
+	if w.WrittenHeader != http.StatusInternalServerError {
+		t.Errorf("Expect %d status code, received %d", http.StatusInternalServerError, w.WrittenHeader)
 	}
 }
 

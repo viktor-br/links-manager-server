@@ -10,6 +10,7 @@ import (
 	"gopkg.in/reform.v1/dialects/postgresql"
 	"os"
 	"time"
+	"github.com/viktor-br/links-manager-server/core/security"
 )
 
 func setUp() (*sql.DB, config.AppConfig, error) {
@@ -40,7 +41,7 @@ func setUp() (*sql.DB, config.AppConfig, error) {
 	admin := &dao.User{
 		ID:        uuid.NewV4().String(),
 		Username:  "admin",
-		Password:  "admin",
+		Password:  security.Hash("admin", config.Secret()),
 		CreatedAt: time.Now(),
 		Role:      entities.RoleAdminUser,
 	}

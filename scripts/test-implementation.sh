@@ -1,4 +1,7 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# Run go generate for reform files
+reform github.com/viktor-br/links-manager-server/core/dao
+
 # Check if main storage container is running. If not start
 RUNNING=$(docker inspect -f {{.State.Running}} lm-test-main-storage 2> /dev/null)
 
@@ -15,6 +18,10 @@ if [ "$RUNNING" = "" ]; then
     docker run -it --rm --link lm-test-main-storage \
         -v $(pwd)/db:/tmp/lm-db postgres \
       psql -h lm-test-main-storage -d test -U postgres -f /tmp/lm-db/structure.sql
+
+    docker run -it --rm --link lm-test-main-storage \
+        -v $(pwd)/db:/tmp/lm-db postgres \
+      psql -h lm-test-main-storage -d test -U postgres -f /tmp/lm-db/test-data.sql
 fi
 
 # Check if container is stopped
@@ -22,6 +29,7 @@ if [ "$RUNNING" = "false" ]; then
     docker start lm-test-main-storage
 fi
 
+# Run tests
 cd $GOPATH
 
 docker run -it --rm --name lm-storage-test \

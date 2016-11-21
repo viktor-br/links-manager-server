@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 go test -cover github.com/viktor-br/links-manager-server/app/controllers
 go test -cover github.com/viktor-br/links-manager-server/app/handlers
 go test -cover github.com/viktor-br/links-manager-server/app/log

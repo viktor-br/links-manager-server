@@ -1,0 +1,127 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Links Manager API",
+    "description": "Managing links, its tags and searching.",
+    "version": "0.1.0"
+  },
+  "host": "localhost",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "basePath": "/api/v1",
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/user": {
+      "put": {
+        "summary": "User creation",
+        "description": "Endpoint creates new user",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "description": "body JSON",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          {
+            "name": "X-Auth-Token",
+            "description": "Authentication token",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User created successfully."
+          },
+          "400": {
+            "description": "Request JSON is corrupted."
+          },
+          "403": {
+            "description": "Either X-Auth-Token header with token is not provided or access denied. You need request new token."
+          },
+          "409": {
+            "description": "User already exists."
+          }
+        }
+      }
+    },
+    "/user/login": {
+      "post": {
+        "summary": "Authentication",
+        "description": "Endpoint verifies user credentials and returns authentication token.",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Body JSON",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserAuth"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Body is empty, X-Auth-Token response header contains access token.",
+            "headers": {
+              "X-Auth-Token": {
+                "description": "Contains access token string.",
+                "type": "string"
+              }
+            }
+          },
+          "400": {
+            "description": "Request JSON corrupted."
+          },
+          "403": {
+            "description": "Access forbidden."
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "UserAuth": {
+      "required": [
+        "username", "password"
+      ],
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string",
+          "format": "password"
+        }
+      }
+    },
+    "User": {
+      "required": [
+        "username", "password"
+      ],
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string",
+          "format": "password"
+        }
+      }
+    }
+  }
+}

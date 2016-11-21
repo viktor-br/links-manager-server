@@ -1,6 +1,6 @@
 CREATE TABLE users (
     id         varchar(36),
-    username      varchar(255),
+    username   varchar(255),
     password   varchar(64),
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
